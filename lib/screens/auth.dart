@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+final firebaseAuth = FirebaseAuth.instance;
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -10,20 +13,48 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
+  BuildContext? _scaffoldContext;
+
   var _isLogin = true;
   var _enteredEmail = '';
   var _enteredPassword = '';
-  void _submit() {
+
+  void _submit() async {
     final isValid = _formKey.currentState!.validate();
-    if (isValid) {
-      _formKey.currentState!.save();
-      print(_enteredEmail);
-      print(_enteredPassword);
+    if (!isValid) {
+      return;
+    }
+    _formKey.currentState!.save();
+    try {
+      if (_isLogin) {
+        //user login
+        final userCredential = await firebaseAuth.signInWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
+        print(userCredential);
+      } else {
+        //user sign up
+        final userCredential =
+            await firebaseAuth.createUserWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
+        print(userCredential);
+      }
+    } on FirebaseAuthException catch (error) {
+      ScaffoldMessenger.of(_scaffoldContext!).clearSnackBars();
+      ScaffoldMessenger.of(_scaffoldContext!).showSnackBar(
+        SnackBar(
+          content: Text(error.message ?? 'Authentication failed.'),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    _scaffoldContext = context;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
       body: Center(
