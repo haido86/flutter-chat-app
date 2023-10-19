@@ -1,4 +1,5 @@
 import 'package:chat_app/screens/chat.dart';
+import 'package:chat_app/screens/load.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'firebase_options.dart';
@@ -30,6 +31,9 @@ class App extends StatelessWidget {
       home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (ctx, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const LoadScreen();
+          }
           if (snapshot.hasData) {
             return const ChatScreen();
           }
