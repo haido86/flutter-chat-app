@@ -1,9 +1,9 @@
 import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import 'package:chat_app/widgets/user_image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 final firebaseAuth = FirebaseAuth.instance;
 
@@ -23,6 +23,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var _enteredEmail = '';
   var _enteredPassword = '';
   File? _selectedImage;
+  var _isAuthenticating = false;
 
   void _submit() async {
     final isValid = _formKey.currentState!.validate();
@@ -31,6 +32,9 @@ class _AuthScreenState extends State<AuthScreen> {
     }
     _formKey.currentState!.save();
     try {
+      setState(() {
+        _isAuthenticating = true;
+      });
       if (_isLogin) {
         //user login
         await firebaseAuth.signInWithEmailAndPassword(
@@ -59,6 +63,9 @@ class _AuthScreenState extends State<AuthScreen> {
           content: Text(error.message ?? 'Authentication failed.'),
         ),
       );
+      setState(() {
+        _isAuthenticating = true;
+      });
     }
   }
 
@@ -124,24 +131,28 @@ class _AuthScreenState extends State<AuthScreen> {
                           obscureText: true,
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _submit,
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer),
-                          child: Text(_isLogin ? 'Login' : 'Sign up'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _isLogin = !_isLogin;
-                            });
-                          },
-                          child: Text(_isLogin
-                              ? 'Create an account'
-                              : 'Already have an account'),
-                        ),
+                        if (_isAuthenticating)
+                          const CircularProgressIndicator(),
+                        if (!_isAuthenticating)
+                          ElevatedButton(
+                            onPressed: _submit,
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer),
+                            child: Text(_isLogin ? 'Login' : 'Sign up'),
+                          ),
+                        if (!_isAuthenticating)
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isLogin = !_isLogin;
+                              });
+                            },
+                            child: Text(_isLogin
+                                ? 'Create an account'
+                                : 'Already have an account'),
+                          ),
                       ],
                     )),
               ),
